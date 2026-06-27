@@ -1,5 +1,3 @@
-// --- VERSIÓN DEFINITIVA: EL MISTERIO CÓSMICO (ESTÉTICA NEÓN RESTAURADA + TRACKPAD BLINDADO) ---
-
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x050505, 0.015); 
 
@@ -23,16 +21,12 @@ scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 const monumento = new THREE.Group();
 scene.add(monumento);
 
-
-// 1. POLVO CÓSMICO
 const geomPolvo = new THREE.BufferGeometry();
 const posPolvo = new Float32Array(3500 * 3);
 for(let i=0; i<3500*3; i++) posPolvo[i] = (Math.random() - 0.5) * 90;
 geomPolvo.setAttribute('position', new THREE.BufferAttribute(posPolvo, 3));
 scene.add(new THREE.Points(geomPolvo, new THREE.PointsMaterial({ size: 0.022, color: 0xffffff, opacity: 0.35, transparent: true })));
 
-
-// 2. FÁBRICA DE CARTELES
 function crearCartel(texto, tamano = 22, color = "#ffffff") {
     const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
     canvas.width = 1024; canvas.height = 128; ctx.font = `italic bold ${tamano}px Georgia`; ctx.textAlign = "center";
@@ -58,18 +52,15 @@ function crearCartelClimax() {
     return sprite;
 }
 
-
-// 3. GENERADOR ÓPTICO EXACTO A TU REFERENCIA DORADA
 function generarTexturaHalo(rgb) {
     const canvas = document.createElement('canvas'); 
     canvas.width = 512; canvas.height = 512; const ctx = canvas.getContext('2d');
     
-    // Curva de luz hiper-nítida (Efecto Donut Neón)
     const grad = ctx.createRadialGradient(256, 256, 10, 256, 256, 256);
     grad.addColorStop(0.0, '#ffffff'); 
-    grad.addColorStop(0.08, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1)`);   // Anillo saturado puro
-    grad.addColorStop(0.32, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.22)`); // Resplandor exterior
-    grad.addColorStop(0.58, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0)`);    // Corte al vacío en el 58%
+    grad.addColorStop(0.08, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1)`);   
+    grad.addColorStop(0.32, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.22)`); 
+    grad.addColorStop(0.58, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0)`);    
     
     ctx.fillStyle = grad; ctx.fillRect(0,0,512,512); 
     return new THREE.CanvasTexture(canvas);
@@ -97,22 +88,21 @@ function crearEstrella(hex, rgb, x, y, z, esPista = false) {
 const estrellasClickables = [];
 
 const paletaGemas = [
-    { h: 0xff3344, rgb: [255, 51, 68] },   // Rojo láser
-    { h: 0x00ffff, rgb: [0, 255, 255] },   // Cian neón
-    { h: 0xffff00, rgb: [255, 255, 0] },   // Amarillo oro
-    { h: 0x44ff66, rgb: [68, 255, 102] },  // Verde eléctrico
-    { h: 0xff00aa, rgb: [255, 0, 170] },   // Magenta
-    { h: 0x8844ff, rgb: [136, 68, 255] },  // Violeta
-    { h: 0xff8833, rgb: [255, 136, 51] }   // Naranja solar
+    { h: 0xff3344, rgb: [255, 51, 68] },   
+    { h: 0x00ffff, rgb: [0, 255, 255] },   
+    { h: 0xffff00, rgb: [255, 255, 0] },   
+    { h: 0x44ff66, rgb: [68, 255, 102] }, 
+    { h: 0xff00aa, rgb: [255, 0, 170] },   
+    { h: 0x8844ff, rgb: [136, 68, 255] },  
+    { h: 0xff8833, rgb: [255, 136, 51] }   
 ];
 
-// Dispersión panorámica amplia (Rango X: ±13 metros)
 for(let i=0; i<20; i++) {
     let gx, gy;
     do {
         gx = (Math.random() - 0.5) * 26.0; 
         gy = (Math.random() - 0.5) * 15.0;  
-    } while (Math.abs(gx) < 4.0 && Math.abs(gy) < 1.4); // Caja central despejada
+    } while (Math.abs(gx) < 4.0 && Math.abs(gy) < 1.4); 
 
     const gz = -3 - Math.random() * 7.5; 
     const g = paletaGemas[i % paletaGemas.length];
@@ -120,15 +110,12 @@ for(let i=0; i<20; i++) {
     monumento.add(trampa); estrellasClickables.push(trampa);
 }
 
-// Las 3 reales ancladas en la zona visual segura de ambas pantallas
 const p1 = crearEstrella(0x00ffff, [0, 255, 255], -4.2, 2.5, -4.2, true); 
 const p2 = crearEstrella(0xff00aa, [255, 0, 170], 4.4, -2.2, -4.5, true); 
 const p3 = crearEstrella(0xffff00, [255, 255, 0], 0.5, 3.6, -5.2, true);  
 estrellasClickables.push(p1, p2, p3);
 estrellasClickables.forEach(e => monumento.add(e));
 
-
-// 4. SUPERNOVAS
 const grupoExplosiones = []; const ondasExpansivas = [];
 const texAnillo = (() => {
     const c = document.createElement('canvas'); c.width=128; c.height=128; const cx=c.getContext('2d');
@@ -148,8 +135,6 @@ function detonarSupernova(posicion, colorHex) {
     sp.position.copy(posicion); sp.scale.set(0.1, 0.1, 1); monumento.add(sp); ondasExpansivas.push(sp);
 }
 
-
-// 5. SANTUARIO Y METEOROS
 const auraClimax = new THREE.Sprite(new THREE.SpriteMaterial({ 
     map: (() => {
         const c=document.createElement('canvas'); c.width=512; c.height=512; const cx=c.getContext('2d');
@@ -167,8 +152,6 @@ function generarMeteoro() {
     scene.add(m); meteoros.push(m);
 }
 
-
-// 6. RAYCASTER + ANIQUILACIÓN FÍSICA DE RAM
 const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
 
 const memoriaProgreso = { 
@@ -199,8 +182,8 @@ function dispararLaser(clientX, clientY) {
     if (hits.length > 0) {
         let tocada = hits[0].object;
         if (tocada.parent && tocada.parent !== monumento) tocada = tocada.parent;
-
-        // Aniquilación permanente en memoria (Imposible chocar con fantasmas)
+n
+        
         const idx = estrellasClickables.indexOf(tocada);
         if (idx > -1) {
             estrellasClickables.splice(idx, 1);
@@ -252,13 +235,10 @@ window.addEventListener('pointerup', (e) => {
 });
 
 
-// 7. MOTOR RESPONSIVO
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-
-// 8. ANIMACIÓN
 let tiempo = 0;
 
 function animar() {
