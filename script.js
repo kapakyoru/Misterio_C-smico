@@ -1,5 +1,3 @@
-// --- VERSIÓN DEFINITIVA: EL MISTERIO CÓSMICO (BROMAS EN EL CENTRO EXACTO + LÍMITE ZOOM) ---
-
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x050505, 0.015); 
 
@@ -13,25 +11,20 @@ document.body.appendChild(renderer.domElement);
 const controles = new THREE.OrbitControls(camera, renderer.domElement);
 controles.enableDamping = true;
 
-// --- LÍMITES DE DISTANCIA (ZOOM) ---
-controles.minDistance = 8.0;  // Límite de acercamiento (evita atravesar los textos)
-controles.maxDistance = 26.0; // Límite de alejamiento (pared invisible del universo)
+controles.minDistance = 8.0;  
+controles.maxDistance = 24.0; 
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 
 const monumento = new THREE.Group();
 scene.add(monumento);
 
-
-// 1. POLVO CÓSMICO
 const geomPolvo = new THREE.BufferGeometry();
 const posPolvo = new Float32Array(3500 * 3);
 for(let i=0; i<3500*3; i++) posPolvo[i] = (Math.random() - 0.5) * 90;
 geomPolvo.setAttribute('position', new THREE.BufferAttribute(posPolvo, 3));
 scene.add(new THREE.Points(geomPolvo, new THREE.PointsMaterial({ size: 0.022, color: 0xffffff, opacity: 0.35, transparent: true })));
 
-
-// 2. FÁBRICA DE CARTELES
 function crearCartel(texto, tamano = 24, color = "#ffffff") {
     const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
     canvas.width = 1024; canvas.height = 128; ctx.font = `italic bold ${tamano}px Georgia`; ctx.textAlign = "center";
@@ -57,8 +50,6 @@ function crearCartelClimax() {
     return sprite;
 }
 
-
-// 3. GENERADOR DE ESTRELLAS BLINDADO (Estrictamente idénticas)
 function generarTexturaHalo(colorHex) {
     const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128; const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(64, 64, 3, 64, 64, 64);
@@ -95,8 +86,6 @@ const p3 = crearEstrella(0xffff00, 'rgba(255, 255, 0, 1)', 2.2, 6.5, -9, 0.17, 2
 estrellasClickables.push(p1, p2, p3);
 estrellasClickables.forEach(e => monumento.add(e));
 
-
-// 4. SUPERNOVAS
 const grupoExplosiones = []; const ondasExpansivas = [];
 const texAnillo = (() => {
     const c = document.createElement('canvas'); c.width=128; c.height=128; const cx=c.getContext('2d');
@@ -116,8 +105,6 @@ function detonarSupernova(posicion, colorHex) {
     sp.position.copy(posicion); sp.scale.set(0.1, 0.1, 1); monumento.add(sp); ondasExpansivas.push(sp);
 }
 
-
-// 5. SANTUARIO Y METEOROS
 const auraClimax = new THREE.Sprite(new THREE.SpriteMaterial({ 
     map: (() => {
         const c=document.createElement('canvas'); c.width=256; c.height=256; const cx=c.getContext('2d');
@@ -134,8 +121,6 @@ function generarMeteoro() {
     scene.add(m); meteoros.push(m);
 }
 
-
-// 6. RAYCASTER + SEMÁFORO NARRATIVO BLINDADO
 const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
 
 const memoriaProgreso = { 
@@ -156,13 +141,12 @@ const frasesTrampa = [
 let encontradas = 0; let temblorIntensidad = 0; let animarZoomClimax = false; let factorZoom = 0.01;
 let bloqueadoPorBroma = false; 
 
-// Cartel Inicial
 let cartelActual = crearCartel(memoriaProgreso[0], 23, "#ffffff");
 monumento.add(cartelActual);
 
 
 window.addEventListener('click', (event) => {
-    if (encontradas === 3 || bloqueadoPorBroma) return; // Candado de seguridad
+    if (encontradas === 3 || bloqueadoPorBroma) return;
 
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1; mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
@@ -177,7 +161,7 @@ window.addEventListener('click', (event) => {
             tocada.visible = false;
 
             if (tocada.userData.esPista) {
-                // --- ACERTÓ UNA ESTRELLA REAL ---
+               
                 encontradas++; 
                 temblorIntensidad = 0.35; 
                 detonarSupernova(tocada.position, tocada.userData.colorBase);
@@ -194,31 +178,30 @@ window.addEventListener('click', (event) => {
                     }, 3800); 
                 }
             } else {
-                // --- CAYÓ EN UNA TRAMPA (Aparece en el centro en color celeste) ---
+                
                 bloqueadoPorBroma = true;
                 detonarSupernova(tocada.position, tocada.userData.colorBase);
                 
                 monumento.remove(cartelActual);
                 const trampaElegida = frasesTrampa[Math.floor(Math.random() * frasesTrampa.length)];
-                cartelActual = crearCartel(trampaElegida, 24, "#88ddff"); // <--- Nace en el centro exacto
+                cartelActual = crearCartel(trampaElegida, 24, "#88ddff");
                 monumento.add(cartelActual);
 
                 setTimeout(() => {
                     if (encontradas < 3) {
                         monumento.remove(cartelActual);
-                        // El sistema busca en qué paso te quedaste (0, 1 o 2) y lo dibuja de nuevo
+                        
                         cartelActual = crearCartel(memoriaProgreso[encontradas], encontradas === 0 ? 23 : 25, "#ffffff");
                         monumento.add(cartelActual);
-                        bloqueadoPorBroma = false; // Libera el candado para el próximo clic
+                        bloqueadoPorBroma = false;
                     }
-                }, 1600); // 1.6 segundos de suspenso
+                }, 1600);
             }
         }
     }
 });
 
 
-// 7. ANIMACIÓN
 let tiempo = 0;
 
 function animar() {
