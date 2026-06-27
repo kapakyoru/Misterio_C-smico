@@ -1,3 +1,5 @@
+// --- VERSIÓN DEFINITIVA: EL MISTERIO CÓSMICO (ESTÉTICA NEÓN RESTAURADA + TRACKPAD BLINDADO) ---
+
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x050505, 0.015); 
 
@@ -6,14 +8,15 @@ camera.position.set(0, 0, 16);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.domElement.style.touchAction = 'none'; 
 document.body.appendChild(renderer.domElement);
 
 const controles = new THREE.OrbitControls(camera, renderer.domElement);
 controles.enableDamping = true;
-
-// --- LÍMITES DE DISTANCIA (ZOOM) ---
-controles.minDistance = 8.0;  // Límite de acercamiento (evita atravesar los textos)
-controles.maxDistance = 26.0; // Límite de alejamiento (pared invisible del universo)
+controles.enablePan = false; 
+controles.minDistance = 8.0;  
+controles.maxDistance = 26.0; 
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 
@@ -30,66 +33,97 @@ scene.add(new THREE.Points(geomPolvo, new THREE.PointsMaterial({ size: 0.022, co
 
 
 // 2. FÁBRICA DE CARTELES
-function crearCartel(texto, tamano = 24, color = "#ffffff") {
+function crearCartel(texto, tamano = 22, color = "#ffffff") {
     const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
     canvas.width = 1024; canvas.height = 128; ctx.font = `italic bold ${tamano}px Georgia`; ctx.textAlign = "center";
     ctx.shadowColor = color === "#ffffff" ? "rgba(255, 120, 220, 0.95)" : "rgba(0, 180, 255, 0.95)"; 
     ctx.shadowBlur = 18; ctx.fillStyle = color; ctx.fillText(texto, 512, 70);
-    ctx.shadowColor = "rgba(0, 0, 0, 0.85)"; ctx.shadowBlur = 4; ctx.fillText(texto, 512, 70);
+    ctx.shadowColor = "rgba(0, 0, 0, 0.98)"; ctx.shadowBlur = 8; ctx.fillText(texto, 512, 70);
 
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
-    sprite.scale.set(13, 1.62, 1); sprite.position.set(0, 0, 0.5); 
+    sprite.scale.set(9.6, 1.2, 1); sprite.position.set(0, 0, 1.2); 
     return sprite;
 }
 
 function crearCartelClimax() {
     const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-    canvas.width = 1024; canvas.height = 256; ctx.font = "italic bold 31px Georgia"; ctx.textAlign = "center";
+    canvas.width = 1024; canvas.height = 256; ctx.font = "italic bold 28px Georgia"; ctx.textAlign = "center";
     ctx.shadowColor = "rgba(255, 40, 140, 1)"; ctx.shadowBlur = 26; ctx.fillStyle = "#ffffff";
     ctx.fillText("Quería decirte que me encanta conocerte", 512, 95); ctx.fillText("y me gustaría seguir creando momentos contigo ❤️", 512, 175);
-    ctx.shadowColor = "rgba(10, 0, 15, 0.95)"; ctx.shadowBlur = 6; 
+    ctx.shadowColor = "rgba(0, 0, 0, 0.98)"; ctx.shadowBlur = 8; 
     ctx.fillText("Quería decirte que me encanta conocerte", 512, 95); ctx.fillText("y me gustaría seguir creando momentos contigo ❤️", 512, 175);
     
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
-    sprite.scale.set(0.01, 0.01, 1); sprite.position.set(0, 0, 1.0); 
+    sprite.scale.set(0.01, 0.01, 1); sprite.position.set(0, 0, 1.5); 
     return sprite;
 }
 
 
-// 3. GENERADOR DE ESTRELLAS BLINDADO (Estrictamente idénticas)
-function generarTexturaHalo(colorHex) {
-    const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128; const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(64, 64, 3, 64, 64, 64);
-    grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.25, colorHex); grad.addColorStop(1, 'rgba(0,0,0,0)'); 
-    ctx.fillStyle = grad; ctx.fillRect(0,0,128,128); return new THREE.CanvasTexture(canvas);
+// 3. GENERADOR ÓPTICO EXACTO A TU REFERENCIA DORADA
+function generarTexturaHalo(rgb) {
+    const canvas = document.createElement('canvas'); 
+    canvas.width = 512; canvas.height = 512; const ctx = canvas.getContext('2d');
+    
+    // Curva de luz hiper-nítida (Efecto Donut Neón)
+    const grad = ctx.createRadialGradient(256, 256, 10, 256, 256, 256);
+    grad.addColorStop(0.0, '#ffffff'); 
+    grad.addColorStop(0.08, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1)`);   // Anillo saturado puro
+    grad.addColorStop(0.32, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.22)`); // Resplandor exterior
+    grad.addColorStop(0.58, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0)`);    // Corte al vacío en el 58%
+    
+    ctx.fillStyle = grad; ctx.fillRect(0,0,512,512); 
+    return new THREE.CanvasTexture(canvas);
 }
 
-function crearEstrella(colorHex, colorRgba, x, y, z, radioEsfera, escalaHalo, esPista = false) {
-    const grupoEstrella = new THREE.Group(); grupoEstrella.position.set(x, y, z);
-    grupoEstrella.add(new THREE.Mesh(new THREE.SphereGeometry(radioEsfera, 16, 16), new THREE.MeshBasicMaterial({ color: colorHex })));
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: generarTexturaHalo(colorRgba), blending: THREE.AdditiveBlending, transparent: true }));
-    halo.scale.set(escalaHalo, escalaHalo, 1); grupoEstrella.add(halo);
-    grupoEstrella.userData = { encontrada: false, colorBase: colorHex, esPista: esPista }; 
-    if(esPista) grupoEstrella.add(new THREE.PointLight(colorHex, 3.5, 14)); 
-    return grupoEstrella;
+function crearEstrella(hex, rgb, x, y, z, esPista = false) {
+    const grupo = new THREE.Group(); grupo.position.set(x, y, z);
+    
+    // Esfera física interna con color propio real
+    grupo.add(new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), new THREE.MeshBasicMaterial({ color: hex })));
+    
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ 
+        map: generarTexturaHalo(rgb), 
+        blending: THREE.AdditiveBlending, 
+        transparent: true,
+        depthWrite: false 
+    }));
+    halo.scale.set(2.2, 2.2, 1); grupo.add(halo);
+
+    grupo.userData = { colorBase: hex, esPista: esPista }; 
+    if(esPista) grupo.add(new THREE.PointLight(hex, 3.5, 14)); 
+    return grupo;
 }
 
 const estrellasClickables = [];
+
 const paletaGemas = [
-    { c: 0xff3344, r: 'rgba(255, 51, 68, 1)' }, { c: 0x44ff66, r: 'rgba(68, 255, 102, 1)' },
-    { c: 0x8844ff, r: 'rgba(136, 68, 255, 1)' }, { c: 0xff8833, r: 'rgba(255, 136, 51, 1)' },
-    { c: 0x3388ff, r: 'rgba(51, 136, 255, 1)' }, { c: 0xffaa44, r: 'rgba(255, 170, 68, 1)' }
+    { h: 0xff3344, rgb: [255, 51, 68] },   // Rojo láser
+    { h: 0x00ffff, rgb: [0, 255, 255] },   // Cian neón
+    { h: 0xffff00, rgb: [255, 255, 0] },   // Amarillo oro
+    { h: 0x44ff66, rgb: [68, 255, 102] },  // Verde eléctrico
+    { h: 0xff00aa, rgb: [255, 0, 170] },   // Magenta
+    { h: 0x8844ff, rgb: [136, 68, 255] },  // Violeta
+    { h: 0xff8833, rgb: [255, 136, 51] }   // Naranja solar
 ];
 
-for(let i=0; i<18; i++) {
-    const gema = paletaGemas[i % paletaGemas.length];
-    const trampa = crearEstrella(gema.c, gema.r, (Math.random()-0.5)*58, (Math.random()-0.5)*38, -6 - Math.random()*14, 0.17, 2.1, false);
+// Dispersión panorámica amplia (Rango X: ±13 metros)
+for(let i=0; i<20; i++) {
+    let gx, gy;
+    do {
+        gx = (Math.random() - 0.5) * 26.0; 
+        gy = (Math.random() - 0.5) * 15.0;  
+    } while (Math.abs(gx) < 4.0 && Math.abs(gy) < 1.4); // Caja central despejada
+
+    const gz = -3 - Math.random() * 7.5; 
+    const g = paletaGemas[i % paletaGemas.length];
+    const trampa = crearEstrella(g.h, g.rgb, gx, gy, gz, false);
     monumento.add(trampa); estrellasClickables.push(trampa);
 }
 
-const p1 = crearEstrella(0x00ffff, 'rgba(0, 255, 255, 1)', -8.5, 4.2, -6, 0.17, 2.1, true); 
-const p2 = crearEstrella(0xff00aa, 'rgba(255, 0, 170, 1)', 7.5, -3.8, -5.5, 0.17, 2.1, true); 
-const p3 = crearEstrella(0xffff00, 'rgba(255, 255, 0, 1)', 2.2, 6.5, -9, 0.17, 2.1, true);  
+// Las 3 reales ancladas en la zona visual segura de ambas pantallas
+const p1 = crearEstrella(0x00ffff, [0, 255, 255], -4.2, 2.5, -4.2, true); 
+const p2 = crearEstrella(0xff00aa, [255, 0, 170], 4.4, -2.2, -4.5, true); 
+const p3 = crearEstrella(0xffff00, [255, 255, 0], 0.5, 3.6, -5.2, true);  
 estrellasClickables.push(p1, p2, p3);
 estrellasClickables.forEach(e => monumento.add(e));
 
@@ -110,7 +144,7 @@ function detonarSupernova(posicion, colorHex) {
         monumento.add(m); chispas.push(m);
     }
     grupoExplosiones.push(chispas);
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texAnillo, color: colorHex, blending: THREE.AdditiveBlending, transparent: true, opacity: 1 }));
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texAnillo, color: colorHex, blending: THREE.AdditiveBlending, transparent: true, opacity: 1, depthWrite: false }));
     sp.position.copy(posicion); sp.scale.set(0.1, 0.1, 1); monumento.add(sp); ondasExpansivas.push(sp);
 }
 
@@ -118,105 +152,113 @@ function detonarSupernova(posicion, colorHex) {
 // 5. SANTUARIO Y METEOROS
 const auraClimax = new THREE.Sprite(new THREE.SpriteMaterial({ 
     map: (() => {
-        const c=document.createElement('canvas'); c.width=256; c.height=256; const cx=c.getContext('2d');
-        const g=cx.createRadialGradient(128,128,10,128,128,128); g.addColorStop(0,'rgba(255,100,170,0.45)'); g.addColorStop(1,'rgba(0,0,0,0)');
-        cx.fillStyle=g; cx.fillRect(0,0,256,256); return new THREE.CanvasTexture(c);
-    })(), blending: THREE.AdditiveBlending, transparent: true, opacity: 0 
+        const c=document.createElement('canvas'); c.width=512; c.height=512; const cx=c.getContext('2d');
+        const g=cx.createRadialGradient(256,256,20,256,256,256); 
+        g.addColorStop(0,'rgba(255,100,170,0.45)'); g.addColorStop(0.5,'rgba(180,30,100,0.12)'); g.addColorStop(1,'rgba(255,100,170,0)');
+        cx.fillStyle=g; cx.fillRect(0,0,512,512); return new THREE.CanvasTexture(c);
+    })(), blending: THREE.AdditiveBlending, transparent: true, opacity: 0, depthWrite: false 
 }));
-auraClimax.position.set(0, 0, -4.0); auraClimax.scale.setScalar(26); monumento.add(auraClimax);
+auraClimax.position.set(0, 0, -4.0); auraClimax.scale.setScalar(24); monumento.add(auraClimax);
 
 const meteoros = []; let activarLluvia = false;
 function generarMeteoro() {
     const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? 0xffaa00 : 0xff88bb, transparent: true, opacity: 0.8 }));
-    m.position.set((Math.random() - 0.5) * 50, 18 + Math.random() * 10, -10 + (Math.random() - 0.5) * 15);
+    m.position.set((Math.random() - 0.5) * 40, 18 + Math.random() * 10, -10 + (Math.random() - 0.5) * 15);
     scene.add(m); meteoros.push(m);
 }
 
 
-// 6. RAYCASTER + SEMÁFORO NARRATIVO BLINDADO
+// 6. RAYCASTER + ANIQUILACIÓN FÍSICA DE RAM
 const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
 
 const memoriaProgreso = { 
-    0: "He escondido 3 estrellas especiales para ti. Búscalas y hazles clic...",
+    0: "He escondido 3 estrellas especiales para ti. Búscalas...",
     1: "Dicen que la curiosidad siempre encuentra respuestas ⭐", 
     2: "Gracias por llegar hasta aquí 🤍", 
     3: "Eso significa que valía la pena descubrir el final..." 
 };
 
-const frasesTrampa = [
-    "¡Uy, casi! Sigue buscando... 👀", 
-    "Frío, frío... por aquí no es 🧊", 
-    "Brilla hermoso, pero no es el secreto ✨", 
-    "Mmmm... prueba con otra 🪐", 
-    "¡Casi! Pero esta es solo una trampa 🙈"
-];
+const frasesTrampa = ["¡Uy, casi! Sigue buscando... 👀", "Frío, frío... por aquí no es 🧊", "Brilla hermoso, pero no es ✨", "Mmmm... prueba con otra 🪐", "Es solo una trampa de color 🙈"];
 
 let encontradas = 0; let temblorIntensidad = 0; let animarZoomClimax = false; let factorZoom = 0.01;
-let bloqueadoPorBroma = false; 
+let temporizadorBroma = null; 
+let toqueInicioX = 0, toqueInicioY = 0;
 
-// Cartel Inicial
-let cartelActual = crearCartel(memoriaProgreso[0], 23, "#ffffff");
+let cartelActual = crearCartel(memoriaProgreso[0], 22, "#ffffff");
 monumento.add(cartelActual);
 
+function dispararLaser(clientX, clientY) {
+    if (encontradas === 3) return; 
 
-window.addEventListener('click', (event) => {
-    if (encontradas === 3 || bloqueadoPorBroma) return; // Candado de seguridad
-
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1; mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    mouse.x = (clientX / window.innerWidth) * 2 - 1; 
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
-    const intersecciones = raycaster.intersectObjects(estrellasClickables, true);
+    
+    const hits = raycaster.intersectObjects(estrellasClickables, true);
 
-    if (intersecciones.length > 0) {
-        let tocada = intersecciones[0].object;
+    if (hits.length > 0) {
+        let tocada = hits[0].object;
         if (tocada.parent && tocada.parent !== monumento) tocada = tocada.parent;
 
-        if (!tocada.userData.encontrada) {
-            tocada.userData.encontrada = true;
-            tocada.visible = false;
+        // Aniquilación permanente en memoria (Imposible chocar con fantasmas)
+        const idx = estrellasClickables.indexOf(tocada);
+        if (idx > -1) {
+            estrellasClickables.splice(idx, 1);
+            monumento.remove(tocada);
 
             if (tocada.userData.esPista) {
-                // --- ACERTÓ UNA ESTRELLA REAL ---
-                encontradas++; 
-                temblorIntensidad = 0.35; 
+                encontradas++; temblorIntensidad = 0.35; 
                 detonarSupernova(tocada.position, tocada.userData.colorBase);
+                if (temporizadorBroma) clearTimeout(temporizadorBroma);
 
                 monumento.remove(cartelActual);
-                cartelActual = crearCartel(memoriaProgreso[encontradas], 25, "#ffffff");
+                cartelActual = crearCartel(memoriaProgreso[encontradas], 22, "#ffffff");
                 monumento.add(cartelActual);
 
                 if (encontradas === 3) {
                     setTimeout(() => {
                         monumento.remove(cartelActual); cartelActual = crearCartelClimax(); monumento.add(cartelActual);
                         animarZoomClimax = true; auraClimax.material.opacity = 1; 
-                        activarLluvia = true; for(let k=0; k<30; k++) generarMeteoro(); 
+                        activarLluvia = true; for(let k=0; k<25; k++) generarMeteoro(); 
                     }, 3800); 
                 }
             } else {
-                // --- CAYÓ EN UNA TRAMPA (Aparece en el centro en color celeste) ---
-                bloqueadoPorBroma = true;
                 detonarSupernova(tocada.position, tocada.userData.colorBase);
-                
+                if (temporizadorBroma) clearTimeout(temporizadorBroma); 
+
                 monumento.remove(cartelActual);
-                const trampaElegida = frasesTrampa[Math.floor(Math.random() * frasesTrampa.length)];
-                cartelActual = crearCartel(trampaElegida, 24, "#88ddff"); // <--- Nace en el centro exacto
+                cartelActual = crearCartel(frasesTrampa[Math.floor(Math.random() * frasesTrampa.length)], 22, "#88ddff");
                 monumento.add(cartelActual);
 
-                setTimeout(() => {
+                temporizadorBroma = setTimeout(() => {
                     if (encontradas < 3) {
                         monumento.remove(cartelActual);
-                        // El sistema busca en qué paso te quedaste (0, 1 o 2) y lo dibuja de nuevo
-                        cartelActual = crearCartel(memoriaProgreso[encontradas], encontradas === 0 ? 23 : 25, "#ffffff");
+                        cartelActual = crearCartel(memoriaProgreso[encontradas], 22, "#ffffff");
                         monumento.add(cartelActual);
-                        bloqueadoPorBroma = false; // Libera el candado para el próximo clic
                     }
-                }, 1600); // 1.6 segundos de suspenso
+                }, 1500); 
             }
         }
+    }
+}
+
+window.addEventListener('pointerdown', (e) => { toqueInicioX = e.clientX; toqueInicioY = e.clientY; });
+window.addEventListener('pointerup', (e) => {
+    // Discriminador de presión: Trackpads reciben 28px de margen, móviles reciben 14px
+    const margen = e.pointerType === 'touch' ? 14 : 28; 
+    if (Math.hypot(e.clientX - toqueInicioX, e.clientY - toqueInicioY) <= margen) {
+        dispararLaser(e.clientX, e.clientY);
     }
 });
 
 
-// 7. ANIMACIÓN
+// 7. MOTOR RESPONSIVO
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+
+// 8. ANIMACIÓN
 let tiempo = 0;
 
 function animar() {
@@ -228,11 +270,11 @@ function animar() {
     } else { monumento.position.set(0,0,0); }
 
     if (animarZoomClimax && factorZoom < 0.999) {
-        factorZoom += (1 - factorZoom) * 0.065; cartelActual.scale.set(14 * factorZoom, 3.5 * factorZoom, 1);
+        factorZoom += (1 - factorZoom) * 0.065; cartelActual.scale.set(11.5 * factorZoom, 2.87 * factorZoom, 1);
     }
 
-    estrellasClickables.forEach(e => { if(!e.userData.encontrada) e.scale.setScalar(1 + Math.sin(tiempo * 1.5) * 0.22); });
-    if (auraClimax.material.opacity > 0) auraClimax.scale.setScalar(26 + Math.sin(tiempo * 1.2) * 1.8);
+    estrellasClickables.forEach(e => e.scale.setScalar(1 + Math.sin(tiempo * 1.5) * 0.22));
+    if (auraClimax.material.opacity > 0) auraClimax.scale.setScalar(24 + Math.sin(tiempo * 1.2) * 1.8);
 
     grupoExplosiones.forEach((chispas, indexG) => {
         chispas.forEach(c => { c.position.x += c.userData.vx; c.position.y += c.userData.vy; c.position.z += c.userData.vz; c.material.opacity -= 0.022; });
@@ -246,8 +288,8 @@ function animar() {
 
     if (activarLluvia) {
         meteoros.forEach(m => {
-            m.position.x += 0.28; m.position.y -= 0.28;
-            if (m.position.y < -16) m.position.set((Math.random() - 0.5) * 50, 18, -10 + (Math.random() - 0.5) * 15);
+            m.position.x += 0.25; m.position.y -= 0.25;
+            if (m.position.y < -16) m.position.set((Math.random() - 0.5) * 40, 18, -10 + (Math.random() - 0.5) * 15);
         });
     }
 
